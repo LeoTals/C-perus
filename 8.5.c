@@ -134,14 +134,13 @@ int getDataOffset(const unsigned char *tcp_hdr)
 
 void setDataOffset(unsigned char *tcp_hdr, int offset)
 {
-	int dataoffset = 0;
 	int byte = 12;
 	int sizeinbits = 4;
 	int bit = 7;
 	int bitschecked = 0;
 	
 	while(bitschecked < sizeinbits){
-		if (offset & (1<<(bit-sizeinbits)){
+		if (offset & (1<<(bit-sizeinbits))){
 			tcp_hdr[byte] |= (1<<bit);
 		}
 		else{
@@ -149,8 +148,8 @@ void setDataOffset(unsigned char *tcp_hdr, int offset)
 		}
 		bitschecked++;
 		bit--;
-		}
 	}
+	
 }
 
 // 001001000110100 = 4660, hex 1234
@@ -159,11 +158,11 @@ void setDataOffset(unsigned char *tcp_hdr, int offset)
 
 
 // 100010101100111 = 17767
-
+/*
 
 int main()
 {
-    /* Feel free to modify this function to test different things */
+     //Feel free to modify this function to test different things 
 
     unsigned char bytes[] = {
         0x12,0x34,0x45,0x67,0xaa,0xbb,0xcc,0xdd,
@@ -186,3 +185,4 @@ int main()
     printf("Data Offset: %d\n", getDataOffset(bytes));   
 	return 1;
 }
+*/
