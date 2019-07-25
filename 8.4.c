@@ -3,52 +3,29 @@
 #include <math.h>
 #include <stdlib.h>
 
-void get_loc(int i, int datasize, int *byteloc, int* bitloc)
-{
-	int bit = i;
-	int byte_index = 0;
-	while (bit < datasize){
-		bit -= datasize;
-		byte_index++;
-	*byteloc = byte_index;
-	*bitloc = datasize-1-bit;
-	}
-}
-void free_spaghetti(int *bit, int *byte)
-{
-	free(bit);
-	free(byte);
-}
-
 void op_bit_set(unsigned char* data, int i)
 {
 	int charsize = 8;
-	int *byte_index = calloc(1,sizeof(int));
-	int *bit = calloc(1,sizeof(int));
-	get_loc(i, charsize, byte_index, bit);
-	data[*byte_index] |= 1<<*bit;
-	free_spaghetti(bit,byte_index);
+	int byte = i / charsize;
+	int bit = i % charsize;
+	data[byte] |= 128>>bit;
 }
 
 void op_bit_unset(unsigned char* data, int i)
 {
 	int charsize = 8;
-	int *byte_index = calloc(1,sizeof(int));
-	int *bit = calloc(1,sizeof(int));
-	get_loc(i, charsize, byte_index, bit);
-	data[*byte_index] &= ~(1<<*bit);
-	free_spaghetti(bit,byte_index);
+	int byte = i / charsize;
+	int bit = i % charsize;
+	data[byte] &= ~(128>>bit);
 }
 
 int op_bit_get(const unsigned char* data, int i)
 {
 	int charsize = 8;
-	int *byte_index = calloc(1,sizeof(int));
-	int *bit = calloc(1,sizeof(int));
-	get_loc(i, charsize, byte_index, bit);
-	unsigned char x = 1 << *bit;
-	x &= data[*byte_index];
-	free_spaghetti(bit,byte_index);
+	int byte = i / charsize;
+	int bit = i % charsize;
+	unsigned char x = 128 >> bit;
+	x &= data[byte];
 	if(x == 0)
 	{
 		return 0;
@@ -58,40 +35,38 @@ int op_bit_get(const unsigned char* data, int i)
 
 void op_print_byte(unsigned char b)
 {
-	unsigned char cpyb = b;
-	for (int i = 7; i <=0 ; i--){
-		cpyb = b >> i;
-		if ((cpyb ^ 1) ==0){
+	//printf("hello, i will be your function for today.\n");
+	unsigned char bitno = 0;
+	for (int i = 7; i >=0 ; i--){
+		bitno = 1;
+		for(int b = 0; b<i;b++)
+		{
+			bitno *=2;
+		}
+		if (b & bitno){
 			printf("1");
 		}
 		else{
 			printf("0");
 		}
 	}
-	printf("\n");
 }
 
 unsigned char op_bit_get_sequence(const unsigned char* data, int i, int how_many)
 {
 	int charsize = 8;
-	int *byte_index = calloc(1,sizeof(int));
-	int *bit = calloc(1,sizeof(int));
-	int bitdest = 0;
-	int testbit = 0;
-	get_loc(i, charsize, byte_index, bit);
-	for (i = 0; i<how_many;i++){
-		testbit = data[*byte_index] >> *bit;
-		if (testbit^1==0)
-		{
-			bitdest |= 1<<how_many-i-1;
-		}
-		*bit++;
-		if (*bit > charsize){
-			*bit -= charsize;
-			*byte_index++;
+	unsigned char bitdest = 0;
+	int currentbit = 0;
+	
+	for(int a = 0; a<how_many;a++)
+	{		
+		currentbit = i+how_many-1-a;
+		int byte = currentbit / charsize;
+		int bit = currentbit % charsize;
+		if(data[byte] & (128 >> bit)){
+			bitdest |= (1<<a);
 		}
 	}
-	free_spaghetti(bit,byte_index);
 	return bitdest;
 }
 
