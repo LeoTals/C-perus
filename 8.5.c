@@ -5,11 +5,19 @@
 int getSourcePort(const unsigned char *tcp_hdr)
 {
 	int sourceport = 0;
-	for(int i = 0; i<2;i++){
-		for(int a = 0;a < 8; a++){
-			if(tcp_hdr[i] & (1<<a)){
-				sourceport |= (1<<(a+(1-i)*8));
-			}
+	int byte = 0;
+	int bit = 7;
+	int sizeinbits = 16;
+	int bitschecked = 0;
+	while(bitschecked < sizeinbits){
+		if (tcp_hdr[byte] & (1<<bit)){
+			sourceport |= (1<<(bit + (1-byte)*8));
+		}
+		bitschecked++;
+		bit--;
+		if (bit < 0){
+			bit = 7;
+			byte++;
 		}
 	}
 	return sourceport;
@@ -18,47 +26,139 @@ int getSourcePort(const unsigned char *tcp_hdr)
 int getDestinationPort(const unsigned char *tcp_hdr)
 {
 	int destinationport = 0;
-	for(int i = 2; i<4;i++){
-		for(int a = 0;a < 8; a++){
-			if(tcp_hdr[i] & (1<<a)){
-				destinationport |= (1<<(a+(1-i)*8));
-			}
+	int byte = 2;
+	int bit = 7;
+	int sizeinbits = 16;
+	int bitschecked = 0;
+	while(bitschecked < sizeinbits){
+		if (tcp_hdr[byte] & (1<<bit)){
+			destinationport |= (1<<(bit + (3-byte)*8));
+		}
+		bitschecked++;
+		bit--;
+		if (bit < 0){
+			bit = 7;
+			byte++;
 		}
 	}
 	return destinationport;
 }
 
 void setSourcePort(unsigned char *tcp_hdr, int port)
+{
+
+	int byte = 0;
+	int bit = 7;
+	int sizeinbits = 16;
+	int bitschecked = 0;
+	while(bitschecked < sizeinbits){
+		if (port & (1<<(bit+(1-byte)*8))){
+			tcp_hdr[byte] |= (1<<bit);
+		}
+		else{
+			tcp_hdr[byte] &= ~(1<<bit);
+		}
+		bitschecked++;
+		bit--;
+		if (bit < 0){
+			bit = 7;
+			byte++;
+		}
+	}
+}
 
 void setDestinationPort(unsigned char *tcp_hdr, int port)
+{
+	int byte = 2;
+	int bit = 7;
+	int sizeinbits = 16;
+	int bitschecked = 0;
+	while(bitschecked < sizeinbits){
+		if (port & (1<<(bit+(3-byte)*8))){
+			tcp_hdr[byte] |= (1<<bit);
+		}
+		else{
+			tcp_hdr[byte] &= ~(1<<bit);
+		}
+		bitschecked++;
+		bit--;
+		if (bit < 0){
+			bit = 7;
+			byte++;
+		}
+	}
+}
 
 int getAckFlag(const unsigned char *tcp_hdr)
 {
 	int ack = 0;
-	if (tcp_hdr[13] & (1<<4)){
-		ack = 1; 
+	int byte = 13;
+	int bit = 4;
+	if (tcp_hdr[byte] & (1<<bit)){
+		ack = 1;
 	}
 	return ack;
 }
 
-void setAckFlag(unsigned char *tcp_hdr, int flag)
+void setAckFlag(unsigned char *tcp_hdr, int flag)    
+{
+	if(flag == 1){
+		tcp_hdr[13] |= (1<<4);
+	}
+	else{
+		tcp_hdr[13] &= ~(1<<4);
+	}
+}
 
 int getDataOffset(const unsigned char *tcp_hdr)
 {
 	int dataoffset = 0;
-	int bit = 4
-	for(int i = bit; i<8;i++){
-		if(tcp_hdr[12] & (1<<i)){
-			dataoffset |= (1<<i-bit);
+	int byte = 12;
+	int sizeinbits = 4;
+	int bit = 7;
+	int bitschecked = 0;
+	while(bitschecked < sizeinbits){
+		if (tcp_hdr[byte] & (1<<bit)){
+			dataoffset |= (1<<(bit-sizeinbits));
 		}
-	}
+		bitschecked++;
+		bit--;
+		if (bit < 0){
+			bit = 7;
+			byte++;
+		}
+	}	
+	
 	return dataoffset;
 }
 
 void setDataOffset(unsigned char *tcp_hdr, int offset)
+{
+	int dataoffset = 0;
+	int byte = 12;
+	int sizeinbits = 4;
+	int bit = 7;
+	int bitschecked = 0;
+	
+	while(bitschecked < sizeinbits){
+		if (offset & (1<<(bit-sizeinbits)){
+			tcp_hdr[byte] |= (1<<bit);
+		}
+		else{
+			tcp_hdr[byte] &= ~(1<<bit);
+		}
+		bitschecked++;
+		bit--;
+		}
+	}
+}
+
+// 001001000110100 = 4660, hex 1234
+// 000000000110100
+// 000000000001010
 
 
-
+// 100010101100111 = 17767
 
 
 int main()
@@ -73,5 +173,16 @@ int main()
     printf("Source port: %d\n", getSourcePort(bytes));
     printf("Destination port: %d\n", getDestinationPort(bytes));
     printf("ACK flag: %d\n", getAckFlag(bytes));
-    printf("Data Offset: %d\n", getDataOffset(bytes));    
+    printf("Data Offset: %d\n", getDataOffset(bytes));   
+	printf("setting: S: 1111, D: 420, 0, 12\n");
+	setSourcePort(bytes, 1111);
+	setDestinationPort(bytes,420);
+	setAckFlag(bytes,0);
+	setDataOffset(bytes,12);
+	printf("\n");
+    printf("Source port: %d\n", getSourcePort(bytes));
+    printf("Destination port: %d\n", getDestinationPort(bytes));
+    printf("ACK flag: %d\n", getAckFlag(bytes));
+    printf("Data Offset: %d\n", getDataOffset(bytes));   
+	return 1;
 }
