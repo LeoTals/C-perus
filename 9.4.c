@@ -7,11 +7,13 @@ int output_binary(const char* filename, Product* shop)
 {
 	FILE *f = fopen(filename,"b");
 	if (!f){
+		printf("Error opening file.\n");
 		return 1;
 	}
 	int i = 0;
-	while (shop[i].name != "\0"){
-		fwrite(shop[i],1,sizeof(Product),f);
+	Product *ptr = shop;
+	while (shop[i].name[0] != '\0'){
+		fwrite(ptr+i,sizeof(Product),1,f);
 		if(ferror(f)!=0){
 			return 1;
 		}
@@ -25,12 +27,16 @@ int output_plaintext(const char* filename, Product* shop)
 {
 	FILE *f = fopen(filename, "w");
 	if(!f){
+		printf("Error opening file.\n");
 		return 1;
 	}
 	int i = 0;
 	while (shop[i].name[0] != '\0'){
 		fprintf(f,"%s %f %d\n",shop[i].name,shop[i].price,shop[i].in_stock);
-		if (ferror(f)!=0){fclose()return 1;}
+		if (ferror(f)!=0){
+			fclose(f);
+			return 1;
+		}
 		i++;
 	}
 	return 0;
@@ -38,15 +44,29 @@ int output_plaintext(const char* filename, Product* shop)
 
 Product* read_binary(const char* filename)
 {
+	FILE *f = fopen(filename,"b");
 	
+	int i = 0;
+	Product *array = NULL;
+	array = calloc(1,sizeof(Product));
+	
+	do{
+		fread(array,1,sizeof(Product),f);
+		i++;
+		Product *newarray = realloc(array,(i+1)*sizeof(Product));
+		array = newarray;
+	}while (feof(f)==0);
+	array[i].name[0] = '\0';
+	fclose(f);
+	return array;
 }
 
 
 
 Product* read_plaintext(const char* filename)
 {
-	FILE *f = fopen(filename,"r")
-	if(!f){return NULL;}
+	FILE *f = fopen(filename,"r");
+	if(!f){printf("Error opening file.\n"); return NULL;}
 	Product* array = calloc(1,sizeof(Product));
 	int i = -1;
 	int result_scan = 0;
@@ -54,9 +74,9 @@ Product* read_plaintext(const char* filename)
 		i++;
 		Product* newarray = realloc(array,(i+1)*sizeof(Product));
 		array = newarray;
-		result_scan = fscanf(f,"%s %f %d", array[i].name, array[i].price, array[i].in_stock);
+		result_scan = fscanf(f,"%s %f %d", array[i].name, &array[i].price, &array[i].in_stock);
 	}while(result_scan == 3);
-	array[i].name = "\0";
+	array[i].name[0] = '\0';
 	array[i].price = 0;
 	array[i].in_stock = 0;
 	return array;
