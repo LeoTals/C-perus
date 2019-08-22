@@ -1,4 +1,6 @@
-Bob 4 dagger 7 5
-Jeb 5 sword 10 0
-Bill 0 fist 2 0
-Valentina 6 Magic 9 10
+Raszavur 58 Warhammer 18
+Mitalar 35 Longbow 15
+Framhir 25 Firesnot 10
+Lepetit 30 Dagger 8
+Qaachua 40 Unarmed_Strike 14
+Giligith_the_ancient 250 Abyssal_Reach 50
