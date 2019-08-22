@@ -102,7 +102,8 @@ int attack(Character *characters, char *input)
 		if(!d&&testdefence){
 			d = characters + i;
 		}
-		printf("Checked %s   attacker - %d defender - %d\n",characters[i].name,testattack,testdefence);
+		//debug function
+		//printf("Checked %s   attacker - %d defender - %d\n",characters[i].name,testattack,testdefence);
 		i++;
 	}
 	if(!a||!d){
@@ -187,14 +188,13 @@ int attack(Character *characters, char *input)
 		free(defender);
 		return 1;
 	}
-	else{ //print output on a failed attack.
+	else{ 							//print output on a failed attack.
 		if(a->name == d->name){
 			printf("%s missed... himself? What? How? Why?\n",a->name);
 		}
 		else{
 			printf("%s rolled a %d! That is not enough to hit %s!\n",a->name,hit,d->name);
 		}
-		printf("Good thing you missed, %s...\n",a->name);
 		free(attacker);
 		free(defender);
 		return 1;
@@ -227,8 +227,8 @@ int cmpxp(const void *a1,const void *b1)
 	else{
 		ret = 0;
 	}
-
-	printf("Compared %s and %s, returned %d\n",a->name,b->name,ret);
+	//test function
+	//printf("Compared %s and %s, returned %d\n",a->name,b->name,ret);
 	return ret;
 }
 
@@ -252,7 +252,7 @@ int save(Character *c, char *input)
 		printf("Error, failed to open file.\n");
 		return 0;
 	}
-	for(int i = 0; c[i].name ; i++){
+	for(int i = 0; i<c[0].NoC ; i++){
 		fprintf(f,"%s %ld %s %ld %ld\n",c[i].name,c[i].hp,c[i].weapon,c[i].maxdmg,c[i].xp);
 	}
 	fclose(f);
