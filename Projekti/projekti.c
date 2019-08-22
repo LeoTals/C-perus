@@ -27,11 +27,6 @@ Character *add_char(Character *characters, char *input)
 		}
 	char *stop = token+strlen(token)+1;
 	long int hp = strtol(token,&stop,10);
-	if(!(hp>0)){
-		printf("Error, a character must have more than 0 hit points.\n");
-		free(name);
-		return 0;
-	}
 	token = strtok(NULL," ");
 	if(!token){
 		printf("Error, input is incomplete.\n");
@@ -97,10 +92,9 @@ int attack(Character *characters, char *input)
 	int i = 0;
 	Character *a = NULL;
 	Character *d = NULL;
-	int ch = 0;
-	while(ch < characters[0].NoC){
+	while(i < characters[0].NoC){
 		int testattack = (strcmp(attacker, characters[i].name) ==0);
-		int testdefence = (strcmp(defender, characters[i].name) == 0);
+		int testdefence =(strcmp(defender, characters[i].name) ==0);
 		
 		if(!a&&testattack){
 			a = characters + i;
@@ -108,7 +102,7 @@ int attack(Character *characters, char *input)
 		if(!d&&testdefence){
 			d = characters + i;
 		}
-		printf("Checked %s   attacker - %d defender - %d\n",characters[i].name,a?1:0,d?1:0);
+		printf("Checked %s   attacker - %d defender - %d\n",characters[i].name,testattack,testdefence);
 		i++;
 	}
 	if(!a||!d){
@@ -134,7 +128,7 @@ int attack(Character *characters, char *input)
 	if(hitroll == 20){critical = 1;}
 	int hit = hitroll + a->tohit;
 	int hitsuccess = 0;
-	if(hit>d->ac){hitsuccess = 1;}
+	if(hit>=d->ac){hitsuccess = 1;}
 	int dmgdice = a->maxdmg/6;
 	int flatbonus = a->maxdmg%6;
 	int damagedone = 0;
@@ -161,7 +155,16 @@ int attack(Character *characters, char *input)
 			xpgain = xpgain * 3;
 			xpgain = xpgain / 2;
 		}
+		if(a->name == d->name){
+			xpgain = 0;
+		}
 		a->xp += xpgain;
+		if (a->name == d->name){
+			printf("%s attacks... Himself??\n",a->name);
+		}
+		else{
+			printf("%s attacks %s with %s!\n",a->name,d->name,a->weapon);
+		}
 		printf("%s rolled a %d! That hits %s!\n",a->name,hitroll,d->name);
 		if(critical){
 			printf("Critical hit!\n");
@@ -177,12 +180,21 @@ int attack(Character *characters, char *input)
 			printf("%s dies, ",d->name);
 		}
 		printf("%s gains %d experience points.\n",a->name,xpgain);
+		if (a->name == d->name){
+			printf("What were you thinking, %s????\n",a->name);
+		}
 		free(attacker);
 		free(defender);
 		return 1;
 	}
 	else{ //print output on a failed attack.
-		printf("%s rolled a %d! That is not enough to hit %s!\n",a->name,hit,d->name);
+		if(a->name == d->name){
+			printf("%s missed... himself? What? How? Why?\n",a->name);
+		}
+		else{
+			printf("%s rolled a %d! That is not enough to hit %s!\n",a->name,hit,d->name);
+		}
+		printf("Good thing you missed, %s...\n",a->name);
 		free(attacker);
 		free(defender);
 		return 1;
@@ -193,24 +205,31 @@ int attack(Character *characters, char *input)
 int cmpxp(const void *a1,const void *b1)
 {
 	/* Hox, positive -> same order, negative -> reverse
-	   Prioriteetti: 1. NULL viimeinen
-					 2. Kuollut hahmo lopussa
-					 3. sort by xp
+	   Prioriteetti:
+					 1. Kuollut hahmo lopussa
+					 2. sort by xp
 	*/
+	int ret = 0;
 	const Character *a = a1;
 	const Character *b = b1;
-	if (b->name == NULL){
-		return 1;
-	}
-	else if (a->hp == 0 && b->hp != 0){
-		return -1;
+	if (a->hp == 0 && b->hp != 0){
+		ret = 1;
 	}
 	else if(b->hp == 0 && a->hp != 0){
-		return 1;
+		ret = -1;
+	}
+	else if(a->xp > b->xp){
+		ret = -1;
+	}
+	else if(b->xp > a->xp){
+		ret = 1;
 	}
 	else{
-		return a->xp - b->xp;
+		ret = 0;
 	}
+
+	printf("Compared %s and %s, returned %d\n",a->name,b->name,ret);
+	return ret;
 }
 
 int printc(Character *characters)
@@ -218,9 +237,9 @@ int printc(Character *characters)
 	int nmb = characters[0].NoC;
 	//Count the number of characters
 	qsort(characters,nmb,sizeof(Character),cmpxp);
+	printf("%20s |  hp | %20s | dmg | hit |  AC | XP\n","Character name","Weapon");
 	for(int i = 0;i<nmb;i++){
 		Character c = characters[i];
-		printf("%20s |  hp | %20s | dmg | hit |  AC | XP\n","Character name","Weapon");
 		printf("%20s | %3ld | %20s | %3ld | %3ld | %3ld | %ld\n",c.name,c.hp,c.weapon,c.maxdmg,c.tohit,c.ac,c.xp);
 	}
 	return 1;
@@ -249,20 +268,19 @@ Character *load(Character *characters,char *input)
 	else{
 		int added = 0;
 		Character *newarray = calloc(1,sizeof(Character));
-		newarray[0].name = NULL;
-		fgets(input+2,78,f);
-		while((feof(f)==0)&&(ferror(f)==0)){
+		char *ptr = fgets(input+2,78,f);
+		while(ptr){
 			Character *success = add_char(newarray,input);
 			if(!success){
 				printf("Error, file contains invalid data.\n");
 				fclose(f);
-				return NULL;
+				return newarray;
 			}
 			else{
 				newarray = success;
 				added++;
 			}
-			fgets(input+2,78,f);
+			ptr = fgets(input+2,78,f);
 		}
 		if(added>0){
 			printf("Game successfully loaded.\n");
@@ -333,10 +351,12 @@ int ac_hit(Character *characters, char *input)
 	}
 	if(!found_it){
 		printf("Error, couldn't find character. Check spelling.\n");
+		free(name);
 		return 0;
 	}
 	else{
 		printf("To hit and AC successfully set.\n");
+		free(name);
 		return 1;
 	}
 	
@@ -356,8 +376,8 @@ void explaindamage()
 void freeall(Character *characters)
 {
 	int i = 0;
-	int NoC = characters[0].NoC;
-	while(i<NoC){
+	int noc = characters[0].NoC;
+	while(i<noc){
 		free(characters[i].name);
 		free(characters[i].weapon);
 		i++;
@@ -391,12 +411,20 @@ int main()
 	while(game){
 		printf("\n>");
 		int success = 0;
-		getline(&buffer,&maxin,stdin);
+		fgets(buffer,maxin,stdin);
 		if(feof(stdin)){
 			buffer[0] = 'Q';
 		}
+		else{
+			int li = 0;
+			while(buffer[li]!='\0'){
+				li++;
+			}
+			if(buffer[li-1]=='\n'){
+				buffer[li-1] = '\0';
+			}
+		}
 		Character *check;
-		
 		switch(buffer[0]){
 			case 'A': //create character
 				check = add_char(characters,buffer);
@@ -436,6 +464,7 @@ int main()
 				printf("Thanks for playing!\n");
 				freeall(characters);
 				game = 0;
+				success = 1;
 				break;
 				
 			case 'T': //tips
@@ -457,6 +486,11 @@ int main()
 				
 			case 'D': //damage explanation
 				explaindamage();
+				success = 1;
+				break;
+				
+			case 'F':
+				printf("F o7\n");
 				success = 1;
 				break;
 				

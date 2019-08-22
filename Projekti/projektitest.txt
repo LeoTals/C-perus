@@ -1,0 +1,4 @@
+Bob 4 dagger 7 5
+Jeb 5 sword 10 0
+Bill 0 fist 2 0
+Valentina 6 Magic 9 10
