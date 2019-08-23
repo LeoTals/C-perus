@@ -124,7 +124,7 @@ int attack(Character *characters, char *input)
 		free(defender);
 		return 0;
 	}
-	int hitroll = 20-(rand()%20);
+	int hitroll = 20-(rand()%20); //calculating hit
 	int critical = 0;
 	if(hitroll == 20){critical = 1;}
 	int hit = hitroll + a->tohit;
@@ -204,10 +204,9 @@ int attack(Character *characters, char *input)
 
 int cmpxp(const void *a1,const void *b1)
 {
-	/* Hox, positive -> same order, negative -> reverse
-	   Prioriteetti:
-					 1. Kuollut hahmo lopussa
-					 2. sort by xp
+	/* 
+	 1. Kuollut hahmo lopussa
+	 2. sort by xp
 	*/
 	int ret = 0;
 	const Character *a = a1;
@@ -266,8 +265,8 @@ Character *load(Character *characters,char *input)
 		return NULL;
 	}
 	else{
-		int added = 0;
 		Character *newarray = calloc(1,sizeof(Character));
+		newarray[0].NoC = 0;
 		char *ptr = fgets(input+2,78,f);
 		while(ptr){
 			Character *success = add_char(newarray,input);
@@ -278,11 +277,10 @@ Character *load(Character *characters,char *input)
 			}
 			else{
 				newarray = success;
-				added++;
 			}
 			ptr = fgets(input+2,78,f);
 		}
-		if(added>0){
+		if(newarray[0].NoC>0){
 			printf("Game successfully loaded.\n");
 			fclose(f);
 			freeall(characters);
@@ -395,7 +393,7 @@ int main()
 	char *bufferloc = calloc(maxin+1,sizeof(char));
 	char *buffer = bufferloc;
 	if(characters&&buffer){
-		characters[0].name = NULL;
+		characters[0].NoC = 0;
 		printf("Successfully created a new game.\n");
 		game = 1;
 	}
